@@ -45,7 +45,6 @@ public class BasicInfoService {
 
         member.setBasicInfo(oldBasicInfo);
 
-
         return BasicInfoResponse.of(oldBasicInfo);
     }
 
