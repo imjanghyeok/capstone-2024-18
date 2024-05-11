@@ -23,7 +23,7 @@ public class ChatRoomMember extends BaseEntity {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "Room_ID")
+    @JoinColumn(name = "ROOM_ID")
     private ChatRoom chatRoom;
 
     @ManyToOne
@@ -45,21 +45,4 @@ public class ChatRoomMember extends BaseEntity {
 
     @Column
     private boolean isReceiverPublic;
-
-    public void setChatRoom(ChatRoom chatRoom) {
-        this.chatRoom = chatRoom;
-    }
-    public void setSender(Member Sender) {
-        this.sender = sender;
-    }
-    public void setReceiver(Member Sender) {
-        this.receiver = receiver;
-    }
-
-    public boolean isSenderExist() {return this.isSenderExist == true;}
-    public boolean isReceiverExist() {return this.isReceiverExist == true;}
-    public boolean isSenderPublic() {return this.isSenderPublic == true;}
-    public boolean isReceiverPublic() {return this.isReceiverPublic == true;}
-
-
 }

@@ -9,6 +9,7 @@ import capstone.facefriend.member.domain.analysisInfo.AnalysisInfoRepository;
 import capstone.facefriend.member.domain.basicInfo.BasicInfo;
 import capstone.facefriend.member.domain.basicInfo.BasicInfoRepository;
 import capstone.facefriend.member.domain.faceInfo.FaceInfo;
+import capstone.facefriend.member.domain.faceInfo.FaceInfoByLevel;
 import capstone.facefriend.member.domain.faceInfo.FaceInfoRepository;
 import capstone.facefriend.member.domain.member.Member;
 import capstone.facefriend.member.domain.member.MemberRepository;
@@ -115,6 +116,10 @@ public class MemberService {
                 .build();
         faceInfoRepository.save(faceInfo);
 
+        FaceInfoByLevel faceInfoByLevel = FaceInfoByLevel.builder()
+                .generatedByLevelS3url(defaultFaceInfoS3url)
+                .build();
+
         // 관상 분석 초기값
         AnalysisInfo analysisInfo = AnalysisInfo.builder()
                 .analysisFull(Map.of(
@@ -135,6 +140,7 @@ public class MemberService {
                 .role(USER)
                 .basicInfo(basicInfo) // 기본정보
                 .faceInfo(faceInfo) // 관상 이미지
+                .faceInfoByLevel(faceInfoByLevel) // 가중치 관상 이미지
                 .analysisInfo(analysisInfo) // 관상 분석
                 .build();
         memberRepository.save(member);

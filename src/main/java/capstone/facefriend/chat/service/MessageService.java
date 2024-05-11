@@ -119,7 +119,6 @@ public class MessageService {
             throw new ChatException(ChatExceptionType.INVALIDED_CHATROOM);
         }
 
-
         ChatMessage chatMessage = ChatMessage.builder()
                 .content(messageRequest.getContent())
                 .sender(sender)
@@ -144,8 +143,8 @@ public class MessageService {
         String topic = channelTopic.getTopic();
 
         redisTemplate.convertAndSend(topic, messageResponse);
-
     }
+
     @Transactional
     public void sendHeart(Long senderId, Long receiveId) {
         String exceptionDestination = "/sub/chat/" + senderId;

@@ -1,6 +1,7 @@
 package capstone.facefriend.bucket;
 
 
+import capstone.facefriend.member.domain.faceInfo.FaceInfoByLevel;
 import capstone.facefriend.member.domain.member.Member;
 import capstone.facefriend.member.domain.member.MemberRepository;
 import capstone.facefriend.member.exception.member.MemberException;
@@ -34,13 +35,15 @@ public class BucketService {
     private String bucketName;
 
     @Value("${spring.cloud.aws.s3.default-faceInfo-s3url}")
-    private String defaultFaceInfoS3url;
+    private String DEFAULT_FACE_INFO_S3_URL;
     @Value("${spring.cloud.aws.s3.origin-postfix}")
-    private String originPostfix;
+    private String ORIGIN_POSTFIX;
     @Value("${spring.cloud.aws.s3.generated-postfix}")
-    private String generatedPostfix;
+    private String GENERATED_POSTFIX;
     @Value("${spring.cloud.aws.s3.resume-postfix}")
-    private String resumePostfix;
+    private String RESUME_POSTFIX;
+    @Value("${spring.cloud.aws.s3.generated-by-level-postfix}")
+    private String GENERATED_BY_LEVEL_POSTFIX;
 
     private final AmazonS3 amazonS3;
     private final MemberRepository memberRepository;
@@ -56,7 +59,7 @@ public class BucketService {
         originMetadata.setContentLength(origin.getInputStream().available());
         originMetadata.setContentType(origin.getContentType());
 
-        String originObjectName = UUID.randomUUID() + originPostfix;
+        String originObjectName = UUID.randomUUID() + ORIGIN_POSTFIX;
         amazonS3.putObject(
                 new PutObjectRequest(
                         bucketName,
@@ -73,7 +76,7 @@ public class BucketService {
         generatedMetadata.setContentLength(generated.getInputStream().available());
         generatedMetadata.setContentType(generatedMetadata.getContentType());
 
-        String generatedObjectName = UUID.randomUUID() + generatedPostfix;
+        String generatedObjectName = UUID.randomUUID() + GENERATED_POSTFIX;
         amazonS3.putObject(
                 new PutObjectRequest(
                         bucketName,
@@ -87,7 +90,7 @@ public class BucketService {
         return List.of(originS3url, generatedS3url);
     }
 
-    // FaceInfo : origin 수정 -> generated 수정
+    // FaceInfo : origin 수정 & generated 수정 = origin 삭제 후 업로드 & generated 삭제 후 업로드
     public List<String> updateOriginAndGenerated(
             MultipartFile origin,
             ByteArrayMultipartFile generated,
@@ -98,7 +101,7 @@ public class BucketService {
         String originS3url = member.getFaceInfo().getOriginS3url();
         String generatedS3url = member.getFaceInfo().getGeneratedS3url();
 
-        if (originS3url.equals(defaultFaceInfoS3url) || generatedS3url.equals(defaultFaceInfoS3url)) {
+        if (originS3url.equals(DEFAULT_FACE_INFO_S3_URL) || generatedS3url.equals(DEFAULT_FACE_INFO_S3_URL)) {
             return uploadOriginAndGenerated(origin, generated);
         }
 
@@ -106,7 +109,7 @@ public class BucketService {
         return uploadOriginAndGenerated(origin, generated);
     }
 
-    // FaceInfo : origin 삭제 -> generated 삭제
+    // FaceInfo : origin 삭제 & generated 삭제
     public String deleteOriginAndGenerated(
             Long memberId
     ) {
@@ -120,7 +123,7 @@ public class BucketService {
         String generatedObjectName = generatedS3url.substring(generatedS3url.lastIndexOf("/") + 1);
         amazonS3.deleteObject(new DeleteObjectRequest(bucketName, generatedObjectName));
 
-        return defaultFaceInfoS3url;
+        return DEFAULT_FACE_INFO_S3_URL;
     }
 
 
@@ -141,7 +144,7 @@ public class BucketService {
             metadata.setContentLength(image.getInputStream().available());
             metadata.setContentType(image.getContentType());
 
-            String imageObjectName = UUID.randomUUID() + resumePostfix;
+            String imageObjectName = UUID.randomUUID() + RESUME_POSTFIX;
 
             amazonS3.putObject(
                     new PutObjectRequest(
@@ -175,6 +178,54 @@ public class BucketService {
             String resumeImageObjectName = resumeImageS3url.substring(resumeImageS3url.lastIndexOf("/") + 1);
             amazonS3.deleteObject(new DeleteObjectRequest(bucketName, resumeImageObjectName));
         }
+    }
+
+
+
+
+
+    // FaceInfoByLevel : generatedByLevel 업로드
+    public String uploadGeneratedByLevel(
+            MultipartFile generatedByLevel
+    ) throws IOException {
+        // set metadata
+        ObjectMetadata generatedByLevelMetaData = new ObjectMetadata();
+        generatedByLevelMetaData.setContentLength(generatedByLevel.getInputStream().available());
+        generatedByLevelMetaData.setContentType(generatedByLevel.getContentType());
+
+        String generatedByLevelObjectName = UUID.randomUUID() + GENERATED_BY_LEVEL_POSTFIX;
+        amazonS3.putObject(
+                new PutObjectRequest(
+                        bucketName,
+                        generatedByLevelObjectName,
+                        generatedByLevel.getInputStream(), // origin
+                        generatedByLevelMetaData
+                ).withCannedAcl(CannedAccessControlList.PublicRead)
+        );
+        return amazonS3.getUrl(bucketName, generatedByLevelObjectName).toString();
+    }
+
+    // FaceInfoByLevel : generatedByLevel 수정 = generatedByLevel 삭제 후 업로드
+    public String updateGeneratedByLevel(
+            ByteArrayMultipartFile generatedByLevel,
+            Long memberId
+    ) throws IOException {
+
+        deleteGeneratedByLevel(memberId);
+        return uploadGeneratedByLevel(generatedByLevel);
+    }
+
+    // FaceInfo : generatedByLevel 삭제
+    public boolean deleteGeneratedByLevel(
+            Long memberId
+    ) {
+        Member member = findMemberById(memberId);
+
+        String generatedByLevelS3url = member.getFaceInfoByLevel().getGeneratedByLevelS3url();
+        String generatedByLevelObjectName = generatedByLevelS3url.substring(generatedByLevelS3url.lastIndexOf("/") + 1);
+        amazonS3.deleteObject(new DeleteObjectRequest(bucketName, generatedByLevelObjectName));
+
+        return true;
     }
 
     private Member findMemberById(Long memberId) {

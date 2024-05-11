@@ -4,6 +4,7 @@ import capstone.facefriend.common.domain.BaseEntity;
 import capstone.facefriend.member.domain.analysisInfo.AnalysisInfo;
 import capstone.facefriend.member.domain.basicInfo.BasicInfo;
 import capstone.facefriend.member.domain.faceInfo.FaceInfo;
+import capstone.facefriend.member.domain.faceInfo.FaceInfoByLevel;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,10 @@ public class Member extends BaseEntity {
     @OneToOne
     @JoinColumn(name = "FACE_INFO_ID", nullable = false)
     private FaceInfo faceInfo;
+
+    @OneToOne
+    @JoinColumn(name = "FACE_INFO_ID", nullable = false)
+    private FaceInfoByLevel faceInfoByLevel;
 
     @OneToOne
     @JoinColumn(name = "ANALYSIS_INFO_ID", nullable = false)
